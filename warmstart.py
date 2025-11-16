@@ -117,7 +117,7 @@ def FeasProj(flows, graph, excesses, V, s, t):
   else:
     feas_proj_avg_len = 0
   print("# of paths: %d, average length: %f" % (num_paths, feas_proj_avg_len))
-  return proj_flows, rGraph, end - begin, num_paths, float(total_path_len) / num_paths
+  return proj_flows, rGraph, end - begin, num_paths, feas_proj_avg_len
 
 """
 The main function for warm-starting Ford-Fulkerson with a potentially infeasible flow.

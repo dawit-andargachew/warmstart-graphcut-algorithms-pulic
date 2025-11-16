@@ -20,15 +20,15 @@ def imagegroup(string):
 def crop_all_pics(args):
     folder, group = args.folder, args.group
     x1, x2, y1, y2 = frames[group]
-    dir = folder + './' + group
+    dir = os.path.join(folder, group)
     image_list = os.listdir(dir)
     new_dir = dir + '_cropped'
     if not os.path.exists(new_dir):
         os.makedirs(new_dir)
     for image in image_list:
-        img = cv2.imread(dir + './' + image, cv2.IMREAD_GRAYSCALE)
+        img = cv2.imread(os.path.join(dir, image), cv2.IMREAD_GRAYSCALE)
         cropped_image = img[x1:x2, y1:y2]
-        cv2.imwrite(new_dir + './' + image.split('.')[0] + '_cropped.jpg', cropped_image)
+        cv2.imwrite(os.path.join(new_dir, image.split('.')[0] + '_cropped.jpg'), cropped_image)
     return
 
 if __name__ == "__main__":

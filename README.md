@@ -8,7 +8,9 @@ This repo is a restructured and beginner-friendly version of the implementation 
 
 ## Background
 
-During grad school, I took a course on **advanced algorithms**, where we explored **Learning-Augmented Algorithms** (aka **algorithms with predictions**). One of our tasks was to choose a research paper, read it in detail, and present it. I picked this paper, *“Predictive Flows for Faster Ford-Fulkerson,”* and after spending some time understanding the ideas and running the authors’ code, I decided to clean up the structure and documentation to make the project easier to follow.
+During grad school, I took a course on **advanced algorithms**, where we explored **Learning-Augmented Algorithms** (aka **algorithms with predictions**). One of our tasks was to choose a research paper, read it in detail, and present it. I picked this paper, [**“Predictive Flows for Faster Ford-Fulkerson,”**](https://arxiv.org/abs/2303.00837) and, after spending some time understanding the ideas and running the authors’ code, I decided to clean up the structure and documentation to make the project easier to follow, so that others could understand and appreciate how cool and elegant the design of this algorithm is.
+
+### Hope you find it as interesting as I did!
 
 ---
 

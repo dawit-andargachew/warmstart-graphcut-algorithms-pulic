@@ -1,86 +1,187 @@
 # Image Segmentation Based On Graph Cut Algorithms With Warm-Start
+# Warm-Start Graph Cut for Image Segmentation
 
-This repository contains code written for the experiments of our paper *Predictive Flows for Faster Ford-Fulkerson*. The original datasets are not included in the folder. This file will contain instructions on which datasets to download and how to run the program.
+This repo is a restructured and beginner-friendly version of the implementation for the paper [**"Predictive Flows for Faster Ford-Fulkerson"**](https://arxiv.org/abs/2303.00837) by Yuyan Wang, Siddhartha Banerjee, and David P. Williamson.
 
-*This project built on the project "Image Segmentation" at https://github.com/julie-jiang/image-segmentation/ by Julie Jiang, with permission from Julie. Many functions from the original repository are reused and adapted to fit into our framework (these functions are marked in the code files). We thank Julie for her amazing work and support!*
+**Original Repository**: [wang-yuyan/warmstart-graphcut-algorithms-pulic](https://github.com/wang-yuyan/warmstart-graphcut-algorithms-pulic)
 
-## Files
-Here is a list of files and their usages.
-- image_cropping.py: image pre-processing tools, reads all image groups and crop all images in the sequence. For convenience, The shape and location of the cropping for each image group are written into the code, not read from the command line.
-- imagesegmentation.py: contains all the functions related to performing segmentation on a single image. This is typically used to tune the seeds and also provides the baseline (cold-start Ford-Fulkerson).
-- warmstart.py: implements the warm-start algorithm and has all experiment settings. Used to perform the warm-start experiment.
-- average.py: reads from the experiment result data and takes the average of these results. Stores the output in a separate .txt file.
-- simple_test.py: used to perform a simple test on warmstart.py
 
-More detailed description of the functions can be found in the code files.
+## Background
 
-## Dependencies
-- For python packages, see requirements.txt.
-- warmstart.py has dependency on both imagesegmentation.py and augmentingPath.py, while imagesegmentation.py has dependency on augmentingPath.py
+During grad school, I took a course on **advanced algorithms**, where we explored **Learning-Augmented Algorithms** (aka **algorithms with predictions**). One of our tasks was to choose a research paper, read it in detail, and present it. I picked this paper, *“Predictive Flows for Faster Ford-Fulkerson,”* and after spending some time understanding the ideas and running the authors’ code, I decided to clean up the structure and documentation to make the project easier to follow.
 
-## Data and Collected Results Directories
-For each image group ``` group_name ```, below is where all data/experiment results are stored:
-- sequential_datasets/{group_name}: the original image files
-- sequential_datasets/{group_name}_cropped: the cropped, grayscaled image files
-- sequential_datasets/{group_name}_seeded: the image files with obj/bkg seeds marked. Folders are named with width of the image used.
-- sequential_datasets/{group_name}_cuts: the image files with the found min-cut marked. Folders are named with width of the image used.
-- sequential_datasets/{group_name}_results: the files that document the running time and other statistics such as average augmenting path length for both cold- and warm- start. For image sequence with size n * n, the file {n}_time.txt documents the running time, whereas the file {n}_path.txt documents other data.
+---
 
-## Usage
+## What's This About?
 
-First download the datasets from the links listed in the main body of the paper:
-- birdhouse, head, shoe, at https://lmb.informatik.uni-freiburg.de/resources/datasets/sequences.en.html
-- dog, at https://lmb.informatik.uni-freiburg.de/resources/datasets/StereoEgomotion.en.html, we used the tool ffmpeg to convert the video to .jpg pictures frame by frame.
+This algorithm is about **learning-augmented algorithms** applied to image segmentation. Image segmentation is a core problem in computer vision that aims at separating an object from the background in a given image. It's formulated as a max-flow/min-cut problem using a graph built from pixels.
 
-Each group has many images and we only pick 10 images. The users can pick however many images they like. The four image groups are named "birdhouse", "head", "shoe" and "dog" respectively. In this directory, create four folders with the names respectively, and put the selected images in each folder from that image group.
+Here's the cool part: when you're processing a sequence of images (like video frames), each image is only a minor variation of the previous one. The differences are subtle, like a small shift in perspective or lighting, but the overall structure remains constant.
 
-First we pre-process the images, for example in group birdhouse:
-``` 
+Since each image is similar, the algorithm uses the previous image's result to make the next image computation faster. Instead of starting from scratch every time, it uses the previous result as a starting point, making it much faster. Classical algorithms start from scratch all the time, even though each image is just a slight change in angle or lighting. This algorithm makes use of that similarity to be more efficient.
+
+
+---
+
+## Prerequisites
+
+Make sure you have a Python 3 environment with dependencies from `requirements.txt` installed.
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+
+
+
+
+## Dataset
+
+The dataset is available at the [Pattern Recognition and Image Processing dataset from the University of Freiburg](https://lmb.informatik.uni-freiburg.de/resources/datasets/sequences.en.html) (Scroll down to see the individual groups).
+
+The paper mentions four groups: BIRDHOUSE, HEAD, SHOE, and DOG. However, for the sake of simplicity, this implementation includes only the **BIRDHOUSE**, **HEAD**, and **SHOE** groups. The **DOG** group is not included because it’s a large video (**4.8 GB**), and the remaining three groups are sufficient for understanding the algorithm.
+
+Each group contains consecutive images, and I've included 10 images per group for testing and experimentation. If you'd like to use more images, feel free to download the dataset, extract the frames, and place them in the appropriate folder.
+
+The directory structure looks like this:
+
+
+```
+sequential_datasets/
+├── birdhouse/
+├── head/
+└── shoe/
+```
+
+If you'd like to add your own group, just create a new folder inside the `sequential_datasets` directory and add the images!
+
+---
+
+## Quick Overview of Commands
+
+The commands I've mentioned here can be used right after the repo is cloned. If you'd like to try other groups, just change the name to respective group names (e.g., replace `birdhouse` with `head` or `shoe`).
+
+- `python image_cropping.py -g birdhouse` - Crop and grayscale images
+- `python imagesegmentation.py -i birdhouse_001_cropped.jpg -g birdhouse -s 30 -l no` - Segment one image with manual seeding
+- `python warmstart.py -g birdhouse -s 30` - Run warm-start on the entire sequence
+- `python average.py -g birdhouse` - Generate performance report
+
+
+## Quick overview of each files
+
+- `image_cropping.py` - Image preprocessing: crops and grayscales all images in a sequence
+- `imagesegmentation.py` - Performs segmentation on a single image (used for the baseline/cold-start)
+- `warmstart.py` - Implements the warm-start algorithm for the entire sequence
+- `average.py` - Calculates averages from experiment results
+- `augmentingPath.py` - Core Ford-Fulkerson implementation
+
+
+
+---
+
+### Step 1: Crop the Original RGB Images
+```bash
 python image_cropping.py -g birdhouse
 ```
-This file creates a new folder, ``` sequential_datasets/birdhouse_cropped ```, containing the two cropped, greyscaled images. When we run imagesegmentation.py and warmstart.py the code will be run on the images in this folder. Here "-g" is used to specify the name of the group (must be one of the four names).
 
-Then we try the image segmentation algorithm on one of the images, let's say we've picked birdhouse_080.jpg from dataset birdhouse. After running image_cropping.py on birdhouse group we should get the image birdhouse_080_cropped.jpg
+Replace `birdhouse` with other group names like `head` or `shoe` if needed.
 
-``` 
-python imagesegmentation.py -i birdhouse_080_cropped.jpg -g birdhouse -s 30 -l no
+<!-- **What happens:** -->
+After running the above command, a folder for the respective group will be created containing grayscale cropped images. In our case, it will be `birdhouse_cropped` and contains cropped images for each image found in the `birdhouse` group.
+
+---
+
+### Step 2: Run Image Segmentation Algorithm on One Image
+```bash
+python imagesegmentation.py -i birdhouse_001_cropped.jpg -g birdhouse -s 30 -l no
 ```
-Commands we've used and their meaning:
-- -i: image name
-- -g: group name (has to be one of the four)
-- -s: size of the resized image, if input n, the resized image will be n pixels * n pixels.
-- -l: whether or not the seeds are loaded from an existing file. Default is "yes" and the seeds will be loaded from the directory ``` sequential_datasets/{group_name}_cuts/size/{group_name}_seeds.csv ``` If "no", a window will pop out for user to plant object seeds. After that press ESC and another window will pop out for user to plant background seeds. The planted seeds will be stored in the above directiory and overwrite existing seed files with the same name, if any.
 
-The seeded image is saved in: ``` sequential_datasets/{group_name}_seeded/{size}/{image_name}_seeded.jpg ```
+- Replace `birdhouse_001_cropped.jpg` and `birdhouse` with respective names
+- `30` can be `60` or `120`—it determines the size of the resized image (30×30, 60×60, or 120×120 pixels)
+- `-l no` means we're NOT loading seeds from a file (we'll mark them manually)
 
-After min cut is found, the program marks all the arcs in the cut with color red and saves the resulting image in ```sequential_datasets/{group_name}_cuts/{size}/{image_name}_cuts.jpg```
+<!-- **What happens:** -->
+This step generates an image that can be used to initiate the warm-starting phase. It also creates a folder `birdhouse_cropped/30` (in our case) and puts an image inside it which is used to seed the rest of the images. At this stage, we're just marking the first image manually—what's the object and what's the background.
 
-To run the warm-start algorithm on a sequence of images, first find the file ``` sequential_datasets/birdhouse_seeds.cvs ``` and copy paste it into the folder ``` sequential_datasets/birdhouse_cuts/30/ ``` This guarantees that the code "warmstart.py" can read the seeds. 
+**Interactive Part:** 
+After running this command, a popup window will appear:
+1. Place red dots on the object, then press **ESC**.
+2. On the same window, place green dots on the background, then press **ESC** when done.
 
-Then, run the following line:
-```
+
+The script then runs graph-cut using these seeds.
+
+#### Why Do We Mark Points?
+
+These points are user seeds for segmentation:
+- **Red dots** = foreground (object you want to segment)
+- **Green dots** = background (area to exclude)
+
+Graph-cut (and Ford-Fulkerson behind it) needs these seeds to know where to start the max-flow/min-cut computation. Without seeds, the algorithm wouldn't know what to segment.
+
+
+---
+
+### Step 3: Run Warm-Starting
+```bash
 python warmstart.py -g birdhouse -s 30
 ```
-The "-g" and "-s" have the same meaning as before. The algorithm reads the seeds from the file we copied and applies the seeds to every image in the folder corresponding to the group birdhouse. It stores the seeded images, applies imagesegmentation.py to the first image in the sequence, and starting with the second image, applies both the function in imagesegmentation.py and the warm-start function to the image sequence using the previous max flow solution. The resulting cuts are stored and data is collected, stored in two .text files:
 
-``` sequential_datasets/{group_name}_results/{size}_time.txt ```, ``` sequential_datasets/{group_name}_results/{size}_path.txt ```
+- `30` could be `60` or `120` as well
 
-One can then run the code ``` python average.py ``` (not needed here as we have only two images in the example sequence).
+#### **❗ Important**: Make sure you use the same number as in Step 2. If you used `-s 30` in Step 2, use `-s 30` here.
+
+**What happens:**
+
+Assuming we have 10 images in the sequence, the algorithm:
+1. Uses the first image to warm-start the second image segmentation
+2. Uses the second image result to warm-start the third
+3. Continues like this—each previous result is used as input to the current image until the last one
+
+By the end of this, the folder `birdhouse_cuts/30` contains the segmentation result for each image (a total of 10 images).
+
+#### Why Warm-Start?
+
+Instead of starting Ford-Fulkerson from scratch for every image, it uses the previous image's max-flow as a starting point → much faster segmentation. The first image needs the seeds, but segmentation is automatic for the rest of the sequence—no need to mark seeds again.
+
+---
+
+### Step 4: Generate Performance Report
+```bash
+python average.py -g birdhouse
+```
+
+This generates the average time taken to process each image and puts the report in a `.txt` file. The report can be found as `all_path_averages.txt` and `all_time_avearages.txt` undre `sequential_datasets` folder.
+
+---
 
 ## Example Images
 
-1. `birdhouse_080.jpg` 
+### Original RGB Image
+![original RGB image you want to segment](sequential_datasets/birdhouse/birdhouse_001.jpg)
 
-Original, cropped and grayscaled, seeded image of size 30 * 30
+### After Step 1: Cropped Image
+![cropped and grayscaled image](birdhouse(sample_output)/birdhouse_cropped/birdhouse_001_cropped.jpg)
 
-![birdhouse_080.jpg](sequential_datasets/birdhouse/birdhouse_080.jpg) ![birdhouse_080_cropped.jpg](sequential_datasets/birdhouse_cropped/birdhouse_080_cropped.jpg) ![birdhouse_080_cropped_seeded.jpg](sequential_datasets/birdhouse_seeded/30/birdhouse_080_cropped_seeded.jpg)
+### After Step 2: Seeded Image
+![image showing red foreground seeds and green background seeds](birdhouse(sample_output)/birdhouse_seeded/120/birdhouse_001_cropped_seeded.jpg)
 
-2. `birdhouse_080.jpg`, `birdhouse_081.jpg`
-
-Cuts on two consecutive images with the same seeds
-
-![birdhouse_080_cropped_cuts.jpg](sequential_datasets/birdhouse_cuts/30/birdhouse_080_cropped_cuts.jpg)![birdhouse_081_cropped_cuts.jpg](sequential_datasets/birdhouse_cuts/30/birdhouse_081_cropped_cuts.jpg)
-
-
+### After Step 3: Segmentation Result
+![final segmented image with object separated from background](birdhouse(sample_output)/birdhouse_cuts/120/birdhouse_001_cropped_cuts.jpg)
 
 
+
+---
+
+## Credits and Acknowledgments
+
+This work is based on:
+- **Paper**: [Predictive Flows for Faster Ford-Fulkerson](https://arxiv.org/abs/2303.00837) by Yuyan Wang, Siddhartha Banerjee, and David P. Williamson
+- **Original Repository**: [wang-yuyan/warmstart-graphcut-algorithms-pulic](https://github.com/wang-yuyan/warmstart-graphcut-algorithms-pulic)
+
+---
+
+#### More detailed descriptions can be found in the code files themselves.
+
+#### *That's it! The algorithm is pretty clever—by reusing information from previous frames, it dramatically speeds up video segmentation tasks. Pretty cool, right?*
